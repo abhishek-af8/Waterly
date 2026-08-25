@@ -84,34 +84,33 @@ public class WaterlyReminderPlugin extends Plugin {
     @PluginMethod
     public void checkPendingReminder(PluginCall call) {
         JSObject ret = new JSObject();
-        ret.put("hasPendingReminder", pendingReminderTrigger);
-        // Clear flag after query
+        ret.put("hasPending", pendingReminderTrigger);
         pendingReminderTrigger = false;
         call.resolve(ret);
     }
 
     @PluginMethod
-    public void triggerFullScreenReminder(PluginCall call) {
+    public void triggerFullScreenWake(PluginCall call) {
         String title = call.getString("title", "💧 Time to hydrate! — Waterly");
         String body = call.getString("body", "Your body is asking for some water. Take a refreshing sip now.");
 
         Context context = getContext();
         createNotificationChannel(context);
 
-        // 1. Wake screen and acquire temporary CPU lock
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wakeLock = null;
         if (pm != null) {
             try {
                 wakeLock = pm.newWakeLock(
-                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.ON_AFTER_RELEASE,
-                    "waterly:full_screen_reminder"
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP |
+                    PowerManager.ON_AFTER_RELEASE,
+                    "waterly:fullscreen_trigger"
                 );
-                wakeLock.acquire(10 * 1000L);
+                wakeLock.acquire(15 * 1000L);
             } catch (Exception ignored) {}
         }
 
-        // 2. Build Intent to open MainActivity
         Intent fullScreenIntent = new Intent(context, MainActivity.class);
         fullScreenIntent.addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK |
@@ -128,7 +127,6 @@ public class WaterlyReminderPlugin extends Plugin {
             PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
         );
 
-        // 3. Build Notification with FullScreenIntent
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(title)
@@ -137,6 +135,7 @@ public class WaterlyReminderPlugin extends Plugin {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
+            .setOngoing(false)
             .setVibrate(new long[]{0, 500, 200, 500, 200, 500})
             .setContentIntent(fullScreenPendingIntent)
             .setFullScreenIntent(fullScreenPendingIntent, true);
@@ -146,12 +145,10 @@ public class WaterlyReminderPlugin extends Plugin {
             notificationManager.notify(NOTIFICATION_ID, builder.build());
         } catch (SecurityException ignored) {}
 
-        // 4. Directly bring MainActivity to the foreground
         try {
             context.startActivity(fullScreenIntent);
         } catch (Exception ignored) {}
 
-        // Notify JS listeners immediately
         setPendingReminder(true);
 
         if (wakeLock != null && wakeLock.isHeld()) {

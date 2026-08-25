@@ -181,13 +181,8 @@ export function calculateNextScheduledReminder(
     }
   }
 
-  // Find the next upcoming slot strictly in the future
-  const upcomingSlots = uniqueSlots.filter(slotMs => {
-    if (lastTriggeredSlot && slotMs <= lastTriggeredSlot) {
-      return false;
-    }
-    return slotMs > nowMs;
-  });
+  // Find the next upcoming slot strictly in the future (after current time)
+  const upcomingSlots = uniqueSlots.filter(slotMs => slotMs > nowMs);
 
   const nextReminderAt = upcomingSlots.length > 0
     ? upcomingSlots[0]

@@ -465,7 +465,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             </h2>
 
             <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
-              Waterly works locally in your browser. Clicking below will initialize the gentle chime sound and request browser notifications.
+              Waterly stores your data privately on your device. Clicking below will initialize the gentle chime sound and enable reminders.
             </p>
 
             <div className="space-y-2 pt-1 text-left text-xs">

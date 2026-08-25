@@ -73,6 +73,26 @@ export default function App() {
       }
     }
   }, [logWater]);
+
+  // Global Audio Autoplay Unlock on First User Touch/Click
+  useEffect(() => {
+    const handleFirstUserInteraction = () => {
+      unlockAudio();
+      window.removeEventListener('click', handleFirstUserInteraction);
+      window.removeEventListener('touchstart', handleFirstUserInteraction);
+      window.removeEventListener('keydown', handleFirstUserInteraction);
+    };
+
+    window.addEventListener('click', handleFirstUserInteraction, { passive: true });
+    window.addEventListener('touchstart', handleFirstUserInteraction, { passive: true });
+    window.addEventListener('keydown', handleFirstUserInteraction, { passive: true });
+
+    return () => {
+      window.removeEventListener('click', handleFirstUserInteraction);
+      window.removeEventListener('touchstart', handleFirstUserInteraction);
+      window.removeEventListener('keydown', handleFirstUserInteraction);
+    };
+  }, [unlockAudio]);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => !settings.hasCompletedOnboarding);
 
   const handleFinishOnboarding = () => {
@@ -188,7 +208,7 @@ export default function App() {
             <span>- By <strong className="text-amber-300 font-semibold">Abhishek Tiwari</strong> and <strong className="text-cyan-400 font-semibold">Gemini</strong></span>
           </p>
           <p className="text-[11px] text-slate-500">
-            Browser-only • Local persistence • No account or external servers needed
+            100% Offline-First • On-Device Storage • No account or external servers needed
           </p>
         </div>
       </footer>

@@ -49,6 +49,16 @@ class AudioService {
     this.stopRingtone();
     this.isLooping = true;
 
+    // Ensure audio context is warm and running
+    try {
+      const ctx = this.getAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    } catch {
+      // ignore
+    }
+
     const playCycle = () => {
       if (!this.isLooping) return;
       this.playMelody(ringtoneId, volume);

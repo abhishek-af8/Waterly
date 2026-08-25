@@ -189,7 +189,8 @@ export class ReminderEngine {
 
   public triggerReminder(slotTimestamp?: number): void {
     const nowMs = Date.now();
-    const slot = slotTimestamp || this.state.nextReminderAt || nowMs;
+    // Record the current slot timestamp (guard against future slot values)
+    const slot = (slotTimestamp && slotTimestamp <= nowMs + 60000) ? slotTimestamp : nowMs;
 
     this.setState({
       isActive: true,

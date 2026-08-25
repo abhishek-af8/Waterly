@@ -676,9 +676,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <ShieldCheck className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
                 <div className="text-xs leading-relaxed">
                   <span className="font-bold block text-white mb-1">
-                    100% Local & Private
+                    100% On-Device & Private
                   </span>
-                  Your hydration logs and reminder preferences remain entirely stored inside this browser. Waterly does not require an account, cloud database, or send your personal history to an external server.
+                  Your hydration logs and reminder preferences remain entirely stored on your device. Waterly does not require an account, cloud database, or send your personal data to any external server.
                 </div>
               </div>
 

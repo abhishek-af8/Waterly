@@ -1,0 +1,44 @@
+{
+  "name": "Waterly — Smart Hydration",
+  "short_name": "Waterly",
+  "description": "Smart hydration tracker and customizable daily water reminder companion.",
+  "start_url": "/",
+  "id": "/?source=pwa",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["health", "lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log 250 ml",
+      "short_name": "+250ml",
+      "description": "Quickly log 250ml water",
+      "url": "/?quickAdd=250",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Log 500 ml",
+      "short_name": "+500ml",
+      "description": "Quickly log 500ml water",
+      "url": "/?quickAdd=500",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

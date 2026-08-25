@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="100%" stop-color="#082f49"/>
+    </linearGradient>
+    <linearGradient id="dropGrad512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="60%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <filter id="glow512" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="url(#bgGrad512)"/>
+  <circle cx="256" cy="256" r="170" fill="#06b6d4" opacity="0.15" filter="url(#glow512)"/>
+  <path d="M256 102 C256 102, 144 224, 144 310 C144 372 194 422 256 422 C318 422, 368 372, 368 310 C368 224, 256 102, 256 102 Z" fill="url(#dropGrad512)"/>
+  <path d="M224 176 C224 176, 180 256, 180 304 C180 326, 194 346, 212 358 C198 336, 198 304, 218 262 C228 240, 234 214, 224 176 Z" fill="#ffffff" opacity="0.35"/>
+</svg>

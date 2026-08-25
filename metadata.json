@@ -1,0 +1,8 @@
+{
+  "name": "Waterly — Smart Hydration",
+  "description": "Smart hydration reminders and water tracking web application with customizable intervals, audio ringtones, progress tracking, and browser notifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

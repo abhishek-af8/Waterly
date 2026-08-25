@@ -1,3 +1,5 @@
+import { CapacitorBridge } from './capacitorBridge';
+
 export type NotificationStatus = 'granted' | 'denied' | 'default' | 'unsupported';
 
 export interface NotificationResult {
@@ -139,8 +141,22 @@ class NotificationService {
     let dispatchedSuccessfully = false;
     let lastError: string | null = null;
 
-    // Strategy A: Service Worker showNotification (Primary on Android and background tabs)
-    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    // Strategy 0: Native Android Full-Screen Intent (When running inside Capacitor Android APK)
+    if (CapacitorBridge.isNativeAndroid()) {
+      try {
+        console.log('3-native. Attempting dispatch via Native Android Full-Screen Intent...');
+        const nativeOk = await CapacitorBridge.triggerNativeFullScreenReminder(title, body);
+        if (nativeOk) {
+          dispatchedSuccessfully = true;
+          console.log('4-native. Successfully dispatched via Native Android FullScreenIntent!');
+        }
+      } catch (nativeErr) {
+        console.warn('3-native. Native dispatch error:', nativeErr);
+      }
+    }
+
+    // Strategy A: Service Worker showNotification (Primary on Android web/PWA and background tabs)
+    if (!dispatchedSuccessfully && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       try {
         console.log('3a. Attempting dispatch via Service Worker showNotification...');
         let reg = this.swRegistration;

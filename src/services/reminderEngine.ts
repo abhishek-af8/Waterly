@@ -3,6 +3,7 @@ import { calculateNextScheduledReminder } from '../utils/time';
 import { audioService } from './audioService';
 import { notificationService } from './notificationService';
 import { storageService } from './storageService';
+import { CapacitorBridge } from './capacitorBridge';
 
 export class ReminderEngine {
   private state: ReminderState;
@@ -115,9 +116,19 @@ export class ReminderEngine {
   }
 
   private setState(newState: ReminderState): void {
+    const prevNext = this.state.nextReminderAt;
     this.state = newState;
     storageService.saveReminderState(newState);
     this.notify();
+
+    // If on native Android and nextReminderAt changed, sync native AlarmManager
+    if (CapacitorBridge.isNativeAndroid() && newState.nextReminderAt && newState.nextReminderAt !== prevNext) {
+      CapacitorBridge.scheduleNativeAlarm(
+        newState.nextReminderAt,
+        '💧 Time to hydrate! — Waterly',
+        'Your body is asking for some water. Take a refreshing sip now.'
+      ).catch(() => {});
+    }
   }
 
   private notify(): void {
@@ -208,7 +219,12 @@ export class ReminderEngine {
       audioService.startRingtone(this.settings.ringtoneId, this.settings.volume);
     }
 
-    // Send Browser Notification if enabled
+    // If running on native Android, bring activity to foreground & wake screen
+    if (CapacitorBridge.isNativeAndroid()) {
+      CapacitorBridge.bringAppToForeground().catch(() => {});
+    }
+
+    // Send Notification (Native Full-Screen Intent or Service Worker) if enabled
     if (this.settings.notificationsEnabled) {
       notificationService.sendHydrationNotification(
         'Time to hydrate! 💧',

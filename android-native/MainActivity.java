@@ -12,7 +12,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         // Register custom native Waterly plugin BEFORE super.onCreate
         registerPlugin(WaterlyReminderPlugin.class);
 
@@ -29,7 +29,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onNewIntent(Intent intent) {
+    public void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
         applyLockScreenAndWakeFlags();
@@ -37,7 +37,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         applyLockScreenAndWakeFlags();
         handleReminderIntent(getIntent());

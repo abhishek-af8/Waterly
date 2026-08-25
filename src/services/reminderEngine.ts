@@ -57,6 +57,8 @@ export class ReminderEngine {
     this.init();
   }
 
+  private nativeListenerUnsub: (() => void) | null = null;
+
   private init(): void {
     this.startLoop();
 
@@ -67,11 +69,33 @@ export class ReminderEngine {
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', this.handleVisibilityChange);
     }
+
+    // If running inside native Android, listen to native alarm broadcasts and check pending intents
+    if (CapacitorBridge.isNativeAndroid()) {
+      this.nativeListenerUnsub = CapacitorBridge.addReminderListener(() => {
+        console.log('[ReminderEngine] Native alarm triggered reminder event');
+        this.triggerReminder();
+      });
+
+      CapacitorBridge.checkPendingReminder().then(isPending => {
+        if (isPending) {
+          console.log('[ReminderEngine] Detected pending reminder on launch');
+          this.triggerReminder();
+        }
+      });
+    }
   }
 
   private handleVisibilityChange = (): void => {
     if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
       this.tick();
+      if (CapacitorBridge.isNativeAndroid()) {
+        CapacitorBridge.checkPendingReminder().then(isPending => {
+          if (isPending) {
+            this.triggerReminder();
+          }
+        });
+      }
     }
   };
 
@@ -287,12 +311,22 @@ export class ReminderEngine {
       return;
     }
 
+    const triggerAtMs = Date.now() + delaySeconds * 1000;
+
     this.setState({
       ...this.state,
-      nextReminderAt: Date.now() + delaySeconds * 1000,
+      nextReminderAt: triggerAtMs,
       isSnoozed: false,
       snoozedUntil: null,
     });
+
+    if (CapacitorBridge.isNativeAndroid()) {
+      CapacitorBridge.scheduleNativeAlarm(
+        triggerAtMs,
+        '💧 Time to hydrate! — Waterly (Test)',
+        'Your test reminder has arrived. Drink up!'
+      ).catch(() => {});
+    }
 
     this.testTimerId = window.setTimeout(() => {
       this.triggerReminder();
@@ -302,6 +336,10 @@ export class ReminderEngine {
   public destroy(): void {
     if (this.timerId) clearInterval(this.timerId);
     if (this.testTimerId) clearTimeout(this.testTimerId);
+    if (this.nativeListenerUnsub) {
+      this.nativeListenerUnsub();
+      this.nativeListenerUnsub = null;
+    }
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     }

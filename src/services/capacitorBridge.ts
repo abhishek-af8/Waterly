@@ -4,9 +4,9 @@ export interface NativeReminderPlugin {
   triggerFullScreenReminder(options: { title: string; body: string }): Promise<{ success: boolean }>;
   scheduleExactAlarm(options: { triggerAtMs: number; title: string; body: string }): Promise<{ success: boolean }>;
   cancelAlarm(): Promise<{ success: boolean }>;
-  checkPermissions(): Promise<{ notifications: string; fullScreenIntent: boolean }>;
-  requestNotificationPermission(): Promise<{ granted: boolean }>;
+  checkPendingReminder(): Promise<{ hasPendingReminder: boolean }>;
   bringToForeground(): Promise<{ success: boolean }>;
+  addListener(eventName: string, listenerFunc: (data: any) => void): Promise<{ remove: () => void }>;
 }
 
 export class CapacitorBridge {
@@ -26,6 +26,38 @@ export class CapacitorBridge {
       return win.Capacitor.Plugins.WaterlyReminder as NativeReminderPlugin;
     }
     return null;
+  }
+
+  public static async checkPendingReminder(): Promise<boolean> {
+    const plugin = this.getPlugin();
+    if (!plugin) return false;
+    try {
+      const res = await plugin.checkPendingReminder();
+      return !!res?.hasPendingReminder;
+    } catch (e) {
+      console.warn('[CapacitorBridge] checkPendingReminder error:', e);
+      return false;
+    }
+  }
+
+  public static addReminderListener(callback: () => void): () => void {
+    const plugin = this.getPlugin();
+    if (!plugin || typeof plugin.addListener !== 'function') {
+      return () => {};
+    }
+    let removeHandle: (() => void) | null = null;
+    plugin.addListener('reminderTriggered', () => {
+      console.log('[CapacitorBridge] reminderTriggered event received from native layer');
+      callback();
+    }).then(handle => {
+      removeHandle = () => handle?.remove?.();
+    }).catch(err => {
+      console.warn('[CapacitorBridge] addListener error:', err);
+    });
+
+    return () => {
+      if (removeHandle) removeHandle();
+    };
   }
 
   public static async triggerNativeFullScreenReminder(

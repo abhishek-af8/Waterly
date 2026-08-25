@@ -6,7 +6,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -14,7 +13,6 @@ import android.os.Build;
 import android.os.PowerManager;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -26,12 +24,33 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class WaterlyReminderPlugin extends Plugin {
 
     public static final String CHANNEL_ID = "waterly_hydration_reminders_v2";
-    public static final String CHANNEL_NAME = "Hydration Reminders";
+    public static final String CHANNEL_NAME = "Waterly Hydration Reminders";
     public static final int NOTIFICATION_ID = 1001;
+
+    private static WaterlyReminderPlugin instance;
+    private static boolean pendingReminderTrigger = false;
+
+    public WaterlyReminderPlugin() {
+        instance = this;
+    }
+
+    public static WaterlyReminderPlugin getInstance() {
+        return instance;
+    }
+
+    public static void setPendingReminder(boolean pending) {
+        pendingReminderTrigger = pending;
+        if (pending && instance != null) {
+            JSObject data = new JSObject();
+            data.put("timestamp", System.currentTimeMillis());
+            instance.notifyListeners("reminderTriggered", data, true);
+        }
+    }
 
     @Override
     public void load() {
         super.load();
+        instance = this;
         createNotificationChannel(getContext());
     }
 
@@ -42,9 +61,9 @@ public class WaterlyReminderPlugin extends Plugin {
                 CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_HIGH
             );
-            channel.setDescription("Full-screen reminders to drink water on time");
+            channel.setDescription("High-priority full-screen hydration reminders to drink water on schedule");
             channel.enableVibration(true);
-            channel.setVibrationPattern(new long[]{0, 500, 200, 500});
+            channel.setVibrationPattern(new long[]{0, 500, 200, 500, 200, 500});
             channel.setLockscreenVisibility(NotificationCompat.VISIBILITY_PUBLIC);
             channel.setBypassDnd(true);
 
@@ -63,6 +82,15 @@ public class WaterlyReminderPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void checkPendingReminder(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("hasPendingReminder", pendingReminderTrigger);
+        // Clear flag after query
+        pendingReminderTrigger = false;
+        call.resolve(ret);
+    }
+
+    @PluginMethod
     public void triggerFullScreenReminder(PluginCall call) {
         String title = call.getString("title", "💧 Time to hydrate! — Waterly");
         String body = call.getString("body", "Your body is asking for some water. Take a refreshing sip now.");
@@ -70,23 +98,26 @@ public class WaterlyReminderPlugin extends Plugin {
         Context context = getContext();
         createNotificationChannel(context);
 
-        // 1. Wake screen and CPU lock
+        // 1. Wake screen and acquire temporary CPU lock
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wakeLock = null;
         if (pm != null) {
-            wakeLock = pm.newWakeLock(
-                PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.ON_AFTER_RELEASE,
-                "waterly:full_screen_reminder"
-            );
-            wakeLock.acquire(10 * 1000L); // 10 seconds
+            try {
+                wakeLock = pm.newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.ON_AFTER_RELEASE,
+                    "waterly:full_screen_reminder"
+                );
+                wakeLock.acquire(10 * 1000L);
+            } catch (Exception ignored) {}
         }
 
-        // 2. Intent to open or bring MainActivity to front
+        // 2. Build Intent to open MainActivity
         Intent fullScreenIntent = new Intent(context, MainActivity.class);
         fullScreenIntent.addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK |
             Intent.FLAG_ACTIVITY_SINGLE_TOP |
-            Intent.FLAG_ACTIVITY_CLEAR_TOP
+            Intent.FLAG_ACTIVITY_CLEAR_TOP |
+            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
         );
         fullScreenIntent.putExtra("fromReminder", true);
 
@@ -106,22 +137,22 @@ public class WaterlyReminderPlugin extends Plugin {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
-            .setOngoing(false)
-            .setVibrate(new long[]{0, 500, 200, 500})
+            .setVibrate(new long[]{0, 500, 200, 500, 200, 500})
             .setContentIntent(fullScreenPendingIntent)
             .setFullScreenIntent(fullScreenPendingIntent, true);
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         try {
             notificationManager.notify(NOTIFICATION_ID, builder.build());
-        } catch (SecurityException se) {
-            // Android 13+ POST_NOTIFICATIONS check
-        }
+        } catch (SecurityException ignored) {}
 
-        // 4. Also directly start MainActivity if possible
+        // 4. Directly bring MainActivity to the foreground
         try {
             context.startActivity(fullScreenIntent);
         } catch (Exception ignored) {}
+
+        // Notify JS listeners immediately
+        setPendingReminder(true);
 
         if (wakeLock != null && wakeLock.isHeld()) {
             try {
@@ -202,7 +233,8 @@ public class WaterlyReminderPlugin extends Plugin {
             intent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
                 Intent.FLAG_ACTIVITY_SINGLE_TOP |
-                Intent.FLAG_ACTIVITY_CLEAR_TOP
+                Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             );
             intent.putExtra("fromReminder", true);
             context.startActivity(intent);

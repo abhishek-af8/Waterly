@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:allowBackup="true"
@@ -24,10 +26,11 @@
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:showForAllUsers="true"
+            android:inheritShowWhenLocked="true"
             android:exported="true">
 
             <intent-filter>
@@ -50,6 +53,7 @@
         <!-- BroadcastReceiver for Exact Android AlarmManager Wakes -->
         <receiver
             android:name=".WaterlyAlarmReceiver"
+            android:enabled="true"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.waterly.hydration.ALARM_TRIGGER" />

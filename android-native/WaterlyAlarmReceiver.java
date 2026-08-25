@@ -18,18 +18,22 @@ public class WaterlyAlarmReceiver extends BroadcastReceiver {
         String body = intent.getStringExtra("body");
         if (body == null) body = "Your body is asking for some water. Take a refreshing sip now.";
 
-        // Ensure high-priority notification channel is present
+        // Ensure high-priority notification channel is active
         WaterlyReminderPlugin.createNotificationChannel(context);
 
-        // 1. Wake screen & acquire temporary wake lock
+        // 1. Wake screen and acquire temporary CPU lock
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wakeLock = null;
         if (pm != null) {
-            wakeLock = pm.newWakeLock(
-                PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.ON_AFTER_RELEASE,
-                "waterly:alarm_receiver"
-            );
-            wakeLock.acquire(15 * 1000L); // 15 seconds
+            try {
+                wakeLock = pm.newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP |
+                    PowerManager.ON_AFTER_RELEASE,
+                    "waterly:alarm_receiver"
+                );
+                wakeLock.acquire(15 * 1000L); // 15 seconds
+            } catch (Exception ignored) {}
         }
 
         // 2. Full-Screen Intent targeting MainActivity
@@ -37,7 +41,8 @@ public class WaterlyAlarmReceiver extends BroadcastReceiver {
         fullScreenIntent.addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK |
             Intent.FLAG_ACTIVITY_SINGLE_TOP |
-            Intent.FLAG_ACTIVITY_CLEAR_TOP
+            Intent.FLAG_ACTIVITY_CLEAR_TOP |
+            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
         );
         fullScreenIntent.putExtra("fromReminder", true);
 
@@ -57,7 +62,8 @@ public class WaterlyAlarmReceiver extends BroadcastReceiver {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
-            .setVibrate(new long[]{0, 500, 200, 500})
+            .setOngoing(false)
+            .setVibrate(new long[]{0, 500, 200, 500, 200, 500})
             .setContentIntent(fullScreenPendingIntent)
             .setFullScreenIntent(fullScreenPendingIntent, true);
 
@@ -67,7 +73,10 @@ public class WaterlyAlarmReceiver extends BroadcastReceiver {
         } catch (SecurityException ignored) {
         }
 
-        // 4. Also launch MainActivity directly
+        // 4. Mark pending reminder in plugin instance
+        WaterlyReminderPlugin.setPendingReminder(true);
+
+        // 5. Explicitly launch Activity
         try {
             context.startActivity(fullScreenIntent);
         } catch (Exception ignored) {

@@ -13,13 +13,16 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Register custom native Waterly plugin
+        // Register custom native Waterly plugin BEFORE super.onCreate
         registerPlugin(WaterlyReminderPlugin.class);
 
         super.onCreate(savedInstanceState);
 
-        // Configure Window to turn screen on and show over lock screen
-        applyLockScreenFlags();
+        // Apply lock screen wake and display flags
+        applyLockScreenAndWakeFlags();
+
+        // Check if opened from reminder intent
+        handleReminderIntent(getIntent());
 
         // Ensure high priority notification channel is created
         WaterlyReminderPlugin.createNotificationChannel(this);
@@ -29,16 +32,30 @@ public class MainActivity extends BridgeActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        applyLockScreenFlags();
+        applyLockScreenAndWakeFlags();
+        handleReminderIntent(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        applyLockScreenAndWakeFlags();
+        handleReminderIntent(getIntent());
     }
 
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
-        applyLockScreenFlags();
+        applyLockScreenAndWakeFlags();
     }
 
-    private void applyLockScreenFlags() {
+    private void handleReminderIntent(Intent intent) {
+        if (intent != null && intent.getBooleanExtra("fromReminder", false)) {
+            WaterlyReminderPlugin.setPendingReminder(true);
+        }
+    }
+
+    private void applyLockScreenAndWakeFlags() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
@@ -46,13 +63,14 @@ public class MainActivity extends BridgeActivity {
             if (keyguardManager != null) {
                 keyguardManager.requestDismissKeyguard(this, null);
             }
-        } else {
-            getWindow().addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-            );
         }
+
+        getWindow().addFlags(
+            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+            WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+        );
     }
 }

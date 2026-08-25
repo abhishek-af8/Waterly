@@ -370,48 +370,32 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                       <label htmlFor="onboarding-start-time" className="block text-xs font-semibold text-slate-300 mb-1">
                         Start Time
                       </label>
-                      <div className="relative">
-                        <select
-                          id="onboarding-start-time"
-                          value={tempStartTime}
-                          onChange={e => setTempStartTime(e.target.value)}
-                          className="w-full appearance-none px-3 py-2 bg-slate-950 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl text-white font-mono text-xs outline-none cursor-pointer pr-8"
-                        >
-                          {(TIME_OPTIONS.includes(tempStartTime)
-                            ? TIME_OPTIONS
-                            : [...TIME_OPTIONS, tempStartTime].sort()
-                          ).map(t => (
-                            <option key={t} value={t} className="bg-slate-950 text-white font-mono">
-                              {t} ({formatTime24to12(t)})
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      </div>
+                      <input
+                        id="onboarding-start-time"
+                        type="time"
+                        value={tempStartTime}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val) setTempStartTime(val);
+                        }}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl text-white font-mono text-xs outline-none"
+                      />
                     </div>
 
                     <div>
                       <label htmlFor="onboarding-end-time" className="block text-xs font-semibold text-slate-300 mb-1">
                         End Time
                       </label>
-                      <div className="relative">
-                        <select
-                          id="onboarding-end-time"
-                          value={tempEndTime}
-                          onChange={e => setTempEndTime(e.target.value)}
-                          className="w-full appearance-none px-3 py-2 bg-slate-950 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl text-white font-mono text-xs outline-none cursor-pointer pr-8"
-                        >
-                          {(TIME_OPTIONS.includes(tempEndTime)
-                            ? TIME_OPTIONS
-                            : [...TIME_OPTIONS, tempEndTime].sort()
-                          ).map(t => (
-                            <option key={t} value={t} className="bg-slate-950 text-white font-mono">
-                              {t} ({formatTime24to12(t)})
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      </div>
+                      <input
+                        id="onboarding-end-time"
+                        type="time"
+                        value={tempEndTime}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val) setTempEndTime(val);
+                        }}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl text-white font-mono text-xs outline-none"
+                      />
                     </div>
                   </div>
 

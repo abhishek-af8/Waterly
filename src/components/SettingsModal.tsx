@@ -58,6 +58,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onRestartOnboarding,
 }) => {
   const [activeTab, setActiveTab] = useState<'hydration' | 'reminders' | 'sound' | 'notifications' | 'data'>('hydration');
+  const [useCustomTimeWindow, setUseCustomTimeWindow] = useState(false);
+  const [customStartInput, setCustomStartInput] = useState(settings.reminderStartTime);
+  const [customEndInput, setCustomEndInput] = useState(settings.reminderEndTime);
   const [isTestingNotif, setIsTestingNotif] = useState(false);
   const [notificationFeedback, setNotificationFeedback] = useState<{
     type: 'success' | 'error' | 'info';
@@ -344,61 +347,126 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               {/* Active Window */}
               <div>
-                <span className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                  Active Hydration Window
-                </span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Active Hydration Window
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseCustomTimeWindow(!useCustomTimeWindow);
+                      setCustomStartInput(settings.reminderStartTime);
+                      setCustomEndInput(settings.reminderEndTime);
+                    }}
+                    className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition underline underline-offset-2 flex items-center gap-1"
+                  >
+                    {useCustomTimeWindow ? 'Switch to 15m Intervals' : 'Enter Custom Time'}
+                  </button>
+                </div>
                 <p className="text-xs text-slate-400 mb-3">
                   Waterly will only remind you during your active hours. No alarms while you sleep.
                 </p>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label htmlFor="settings-start-time" className="block text-xs text-slate-400 mb-1">
-                      Start Time
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="settings-start-time"
-                        value={settings.reminderStartTime}
-                        onChange={e => onUpdateSettings({ reminderStartTime: e.target.value })}
-                        className="w-full appearance-none px-3.5 py-2.5 bg-slate-950 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl text-white font-mono text-sm outline-none cursor-pointer pr-9"
-                      >
-                        {(TIME_OPTIONS.includes(settings.reminderStartTime)
-                          ? TIME_OPTIONS
-                          : [...TIME_OPTIONS, settings.reminderStartTime].sort()
-                        ).map(t => (
-                          <option key={t} value={t} className="bg-slate-950 text-white font-mono">
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                {!useCustomTimeWindow ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="settings-start-time" className="block text-xs text-slate-400 mb-1">
+                        Start Time (15m Steps)
+                      </label>
+                      <div className="relative">
+                        <select
+                          id="settings-start-time"
+                          value={settings.reminderStartTime}
+                          onChange={e => onUpdateSettings({ reminderStartTime: e.target.value })}
+                          className="w-full appearance-none px-3.5 py-2.5 bg-slate-950 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl text-white font-mono text-sm outline-none cursor-pointer pr-9"
+                        >
+                          {(TIME_OPTIONS.includes(settings.reminderStartTime)
+                            ? TIME_OPTIONS
+                            : [...TIME_OPTIONS, settings.reminderStartTime].sort()
+                          ).map(t => (
+                            <option key={t} value={t} className="bg-slate-950 text-white font-mono">
+                              {t} ({formatTime24to12(t)})
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="settings-end-time" className="block text-xs text-slate-400 mb-1">
+                        End Time (15m Steps)
+                      </label>
+                      <div className="relative">
+                        <select
+                          id="settings-end-time"
+                          value={settings.reminderEndTime}
+                          onChange={e => onUpdateSettings({ reminderEndTime: e.target.value })}
+                          className="w-full appearance-none px-3.5 py-2.5 bg-slate-950 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl text-white font-mono text-sm outline-none cursor-pointer pr-9"
+                        >
+                          {(TIME_OPTIONS.includes(settings.reminderEndTime)
+                            ? TIME_OPTIONS
+                            : [...TIME_OPTIONS, settings.reminderEndTime].sort()
+                          ).map(t => (
+                            <option key={t} value={t} className="bg-slate-950 text-white font-mono">
+                              {t} ({formatTime24to12(t)})
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <label htmlFor="settings-end-time" className="block text-xs text-slate-400 mb-1">
-                      End Time
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="settings-end-time"
-                        value={settings.reminderEndTime}
-                        onChange={e => onUpdateSettings({ reminderEndTime: e.target.value })}
-                        className="w-full appearance-none px-3.5 py-2.5 bg-slate-950 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl text-white font-mono text-sm outline-none cursor-pointer pr-9"
-                      >
-                        {(TIME_OPTIONS.includes(settings.reminderEndTime)
-                          ? TIME_OPTIONS
-                          : [...TIME_OPTIONS, settings.reminderEndTime].sort()
-                        ).map(t => (
-                          <option key={t} value={t} className="bg-slate-950 text-white font-mono">
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                ) : (
+                  <div className="space-y-3 p-3 rounded-2xl bg-slate-950/80 border border-cyan-500/30 animate-fade-in">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor="custom-start-time-input" className="block text-xs font-semibold text-cyan-300 mb-1">
+                          Custom Start Time
+                        </label>
+                        <input
+                          id="custom-start-time-input"
+                          type="time"
+                          value={customStartInput}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setCustomStartInput(val);
+                            if (val && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val)) {
+                              onUpdateSettings({ reminderStartTime: val });
+                            }
+                          }}
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl text-white font-mono text-sm outline-none"
+                        />
+                        <span className="block text-[11px] text-slate-400 mt-1 font-mono">
+                          {formatTime24to12(customStartInput || settings.reminderStartTime)}
+                        </span>
+                      </div>
+                      <div>
+                        <label htmlFor="custom-end-time-input" className="block text-xs font-semibold text-cyan-300 mb-1">
+                          Custom End Time
+                        </label>
+                        <input
+                          id="custom-end-time-input"
+                          type="time"
+                          value={customEndInput}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setCustomEndInput(val);
+                            if (val && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val)) {
+                              onUpdateSettings({ reminderEndTime: val });
+                            }
+                          }}
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl text-white font-mono text-sm outline-none"
+                        />
+                        <span className="block text-[11px] text-slate-400 mt-1 font-mono">
+                          {formatTime24to12(customEndInput || settings.reminderEndTime)}
+                        </span>
+                      </div>
                     </div>
+                    <p className="text-[11px] text-slate-400">
+                      💡 Set any exact minute (e.g. 07:18 AM, 10:45 PM).
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Snooze duration */}
